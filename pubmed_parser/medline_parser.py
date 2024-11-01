@@ -431,6 +431,7 @@ def parse_author_affiliation(medline):
                             "",
                         ) for c in affiliation
                     ]
+                    affiliation = [c.replace("|"," ") for c in affiliation]
                     affiliation = "|".join(affiliation)
                 else:
                     affiliation = ""
