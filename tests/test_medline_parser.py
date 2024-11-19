@@ -19,10 +19,11 @@ def fetch_compressed_medline_xml(pubmed_id):
         raise requests.exceptions.HTTPError(response.status_code)
 
 
-parsed_medline = pp.parse_medline_xml(fetch_compressed_medline_xml(['36400559', '28786991']))
+parsed_medline = pp.parse_medline_xml(fetch_compressed_medline_xml(['36400559', '28786991', '25989914']))
 parsed_medline = list(parsed_medline)
 article_36400559 = parsed_medline[0]
 article_28786991 = parsed_medline[1]
+article_25989914 = parsed_medline[2]
 
 
 def test_abstract():
@@ -44,6 +45,14 @@ def test_authors():
     assert article_36400559['authors'] == authors_36400559
     authors_28786991 = 'Malekinejad|Mohsen|M|0000-0002-5721-6764;Parriott|Andrea|A|;Viitanen|Amanda P|AP|;Horvath|Hacsi|H|;Marks|Suzanne M|SM|;Kahn|James G|JG|'
     assert article_28786991['authors'] == authors_28786991
+
+
+def test_investigators():
+    """This is a test for the investigator field."""
+    investigators_36400559 = ''
+    assert article_36400559['investigators'] == investigators_36400559
+    investigators_25989914 = 'Eccles|D|D|;Simmonds|P|P|;Altman|D G|DG|;Pharoah|P|P|;Warren|R|R|;Gilbert|F|F|;Jones|L|L|;Eeles|R|R|;Evans|D G R|DG|;Hanby|A|A|;Thompson|A|A|;Hodgson|S|S|;Hammad|H|H|;Lakhani|S|S|'
+    assert article_25989914['investigators'] == investigators_25989914
 
 
 def test_chemical_list():

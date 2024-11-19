@@ -550,8 +550,48 @@ def parse_references(pubmed_article, reference_list):
         return references
 
 
+def parse_investigator(medline):
+    """Parse MEDLINE authors and their corresponding affiliations
+
+    Parameters
+    ----------
+    medline: Element
+        The lxml node pointing to a medline document
+
+    Returns
+    -------
+    authors: list
+        List of authors and their corresponding affiliation in dictionary format
+    """
+    investigators = []
+    investigator_list = medline.find("InvestigatorList")
+    if investigator_list is not None:
+        investigators_list = investigator_list.findall("Investigator")
+        for investigator in investigators_list:
+            if investigator.find("ForeName") is not None:
+                forename = (investigator.find("ForeName").text or "").strip() or ""
+            else:
+                forename = ""
+            if investigator.find("Initials") is not None:
+                initials = (investigator.find("Initials").text or "").strip() or ""
+            else:
+                initials = ""
+            if investigator.find("LastName") is not None:
+                lastname = (investigator.find("LastName").text or "").strip() or ""
+            else:
+                lastname = ""
+            investigators.append(
+                {
+                    "lastname": lastname,
+                    "forename": forename,
+                    "initials": initials,
+                }
+            )
+    return investigators
+
+
 def parse_article_info(
-    pubmed_article, year_info_only, nlm_category, author_list, reference_list, parse_subs=False
+    pubmed_article, year_info_only, nlm_category, author_list, reference_list, investigator_list, parse_subs=False
 ):
     """Parse article nodes from Medline dataset
 
@@ -659,6 +699,18 @@ def parse_article_info(
     journal = article.find("Journal")
     journal_name = " ".join(journal.xpath("Title/text()"))
 
+    investigators_dict = parse_investigator(medline)
+    if not investigator_list:
+        investigators = ";".join(
+            [
+                investigator.get("lastname", "") + "|" + investigator.get("forename", "") + "|" +
+                investigator.get("initials", "") + "|" + investigator.get("identifier", "")
+                for investigator in investigators_dict
+            ]
+        )
+    else:
+        investigators = investigators_dict
+
     pmid = parse_pmid(pubmed_article)
     doi = parse_doi(pubmed_article)
     references = parse_references(pubmed_article, reference_list)
@@ -686,7 +738,8 @@ def parse_article_info(
         "references": references,
         "delete": False,
         "languages": languages,
-        "vernacular_title": vernacular_title
+        "vernacular_title": vernacular_title,
+        "investigators": investigators
     }
     if not author_list:
         dict_out.update({"affiliations": affiliations})
@@ -701,6 +754,7 @@ def parse_medline_xml(
     nlm_category=False,
     author_list=False,
     reference_list=False,
+    investigator_list=False,
     parse_downto_mesh_subterms=False
 ):
     """Parse XML file from Medline XML format available at
@@ -760,6 +814,7 @@ def parse_medline_xml(
                     nlm_category,
                     author_list,
                     reference_list,
+                    investigator_list,
                     parse_subs=parse_downto_mesh_subterms
                 )
                 res['grant_ids'] = parse_grant_id(element)
