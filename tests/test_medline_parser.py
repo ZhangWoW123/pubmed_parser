@@ -79,6 +79,18 @@ def test_doi():
     assert article_28786991['doi'] == '10.1371/journal.pone.0180707'
 
 
+def test_pmc():
+    """This is a test for the pmc field."""
+    assert article_36400559["pmc"] == ''
+    assert article_28786991['pmc'] == 'PMC5546677'
+
+
+def test_pii():
+    """This is a test for the pii field."""
+    assert article_36400559['pii'] == 'S0733-8619(22)00058-5'
+    assert article_28786991['pii'] == ''
+
+
 def test_grant_ids():
     """This is a test for the grant_ids field."""
     assert article_36400559['grant_ids'] == []
@@ -136,22 +148,10 @@ def test_nlm_unique_id():
     assert article_28786991['nlm_unique_id'] == '101285081'
 
 
-def test_other_id():
-    """This is a test for the other_id field."""
-    assert article_36400559['other_id'] == ''
-    assert article_28786991['other_id'] == ''
-
-
 def test_pages():
     """This is a test for the pages field."""
     assert article_36400559['pages'] == '61-76'
     assert article_28786991['pages'] == 'e0180707'
-
-
-def test_pmc():
-    """This is a test for the pmc field."""
-    assert article_36400559['pmc'] == ''
-    assert article_28786991['pmc'] == ''
 
 
 def test_pmid():
