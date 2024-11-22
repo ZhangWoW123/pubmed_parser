@@ -81,6 +81,67 @@ def parse_doi(pubmed_article):
     return doi
 
 
+def parse_pii(pubmed_article):
+    """
+    A function to parse PII from a given Pubmed Article tree
+
+    Parameters
+    ----------
+    pubmed_article: Element
+        The lxml node pointing to a medline document
+
+    Returns
+    -------
+    doi: str
+        A string of PII parsed from a given ``pubmed_article``
+    """
+    medline = pubmed_article.find("MedlineCitation")
+    article = medline.find("Article")
+    elocation_ids = article.findall("ELocationID")
+
+    if len(elocation_ids) > 0:
+        for e in elocation_ids:
+            pii = e.text.strip() or "" if e.attrib.get("EIdType", "") == "pii" else ""
+    else:
+        article_ids = pubmed_article.find("PubmedData/ArticleIdList")
+        if article_ids is not None:
+            pii = article_ids.find('ArticleId[@IdType="pii"]')
+            pii = (
+                (pii.text.strip() if pii.text is not None else "")
+                if pii is not None
+                else ""
+            )
+        else:
+            pii = ""
+    return pii
+
+
+def parse_pmc(pubmed_article):
+    """
+    A function to parse pmc from a given Pubmed Article tree
+
+    Parameters
+    ----------
+    pubmed_article: Element
+        The lxml node pointing to a medline document
+
+    Returns
+    -------
+    doi: str
+        A string of pmc parsed from a given ``pubmed_article``
+    """
+    article_ids = pubmed_article.find("PubmedData/ArticleIdList")
+    if article_ids is not None:
+        pmc_list = [i for i in article_ids if "pmc" in i.attrib.get("IdType") and "PMC" in i.text]
+        if len(pmc_list) > 0:
+            pmc = pmc_list[0].text.strip()
+        else:
+            pmc = ""
+    else:
+        pmc = ""
+    return pmc
+
+
 def parse_mesh_terms(medline, parse_subs=False):
     """
     A function to parse MESH terms from article
@@ -256,34 +317,6 @@ def parse_chemical_list(medline):
             )
     chemical_list = "; ".join(chemical_list)
     return chemical_list
-
-
-def parse_other_id(medline):
-    """Parse OtherID from article, each separated by ;
-
-    Parameters
-    ----------
-    medline: Element
-        The lxml node pointing to a medline document
-
-    Returns
-    -------
-    other_id: str
-        String of semi-colon separated Other IDs found in the document
-    """
-    pmc = ""
-    other_id = list()
-    oids = medline.findall("OtherID")
-    if oids is not None:
-        for oid in oids:
-            if "PMC" in oid.text:
-                pmc = oid.text
-            else:
-                other_id.append(oid.text)
-        other_id = "; ".join(other_id)
-    else:
-        other_id = ""
-    return {"pmc": pmc, "other_id": other_id}
 
 
 def parse_journal_info(medline):
@@ -591,7 +624,9 @@ def parse_investigator(medline):
 
 
 def parse_article_info(
-    pubmed_article, year_info_only, nlm_category, author_list, reference_list, investigator_list, parse_subs=False
+    pubmed_article, year_info_only, nlm_category, 
+    author_list, reference_list, investigator_list,
+    parse_subs=False
 ):
     """Parse article nodes from Medline dataset
 
@@ -713,13 +748,14 @@ def parse_article_info(
 
     pmid = parse_pmid(pubmed_article)
     doi = parse_doi(pubmed_article)
+    pii = parse_pii(pubmed_article)
+    pmc = parse_pmc(pubmed_article)
     references = parse_references(pubmed_article, reference_list)
     pubdate = date_extractor(journal, year_info_only)
     mesh_terms = parse_mesh_terms(medline, parse_subs=parse_subs)
     publication_types = parse_publication_types(medline)
     chemical_list = parse_chemical_list(medline)
     keywords = parse_keywords(medline)
-    other_id_dict = parse_other_id(medline)
     journal_info_dict = parse_journal_info(medline)
     dict_out = {
         "title": title,
@@ -735,6 +771,8 @@ def parse_article_info(
         "chemical_list": chemical_list,
         "keywords": keywords,
         "doi": doi,
+        "pii": pii,
+        "pmc": pmc,
         "references": references,
         "delete": False,
         "languages": languages,
@@ -743,7 +781,6 @@ def parse_article_info(
     }
     if not author_list:
         dict_out.update({"affiliations": affiliations})
-    dict_out.update(other_id_dict)
     dict_out.update(journal_info_dict)
     return dict_out
 
