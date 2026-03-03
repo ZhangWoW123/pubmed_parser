@@ -155,8 +155,9 @@ def parse_mesh_terms(medline, parse_subs=False):
     Returns
     -------
     mesh_terms: str
-        String of semi-colon ``;`` spearated MeSH (Medical Subject Headings)
+        String of exclamation mark ``!`` separated MeSH (Medical Subject Headings)
         terms contained in the document, with MajorTopicYN appended.
+        Format: UI^DescriptorName^MajorTopicYN
     """
     if parse_subs:
         return parse_mesh_terms_with_subs(medline)
@@ -164,13 +165,13 @@ def parse_mesh_terms(medline, parse_subs=False):
         mesh = medline.find("MeshHeadingList")
         mesh_terms_list = [
             m.find("DescriptorName").attrib.get("UI", "")
-            + ":"
+            + "^"
             + m.find("DescriptorName").text
-            + ":"
+            + "^"
             + m.find("DescriptorName").attrib.get("MajorTopicYN", "")
             for m in mesh.getchildren()
         ]
-        mesh_terms = "; ".join(mesh_terms_list)
+        mesh_terms = "!".join(mesh_terms_list)
     else:
         mesh_terms = ""
     return mesh_terms
