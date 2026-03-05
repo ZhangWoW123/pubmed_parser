@@ -271,7 +271,7 @@ def parse_publication_types(medline):
 
 
 def parse_keywords(medline):
-    """Parse keywords from article, separated by ;
+    """Parse keywords from article with MajorTopicYN attribute
 
     Parameters
     ----------
@@ -281,15 +281,17 @@ def parse_keywords(medline):
     Returns
     -------
     keywords: str
-        String of concatenated keywords.
+        String of exclamation mark ``!`` separated keywords with MajorTopicYN.
+        Format: Keyword^MajorTopicYN
     """
     keyword_list = medline.find("KeywordList")
     keywords = list()
     if keyword_list is not None:
         for k in keyword_list.findall("Keyword"):
             if k.text is not None:
-                keywords.append(k.text)
-        keywords = "; ".join(keywords)
+                keyword_with_major = k.text + "^" + k.attrib.get("MajorTopicYN", "")
+                keywords.append(keyword_with_major)
+        keywords = "!".join(keywords)
     else:
         keywords = ""
     return keywords
